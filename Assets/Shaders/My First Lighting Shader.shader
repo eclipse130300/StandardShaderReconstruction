@@ -1,6 +1,4 @@
-﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-Shader "Custom/My First Lighting Shader" {
+﻿Shader "Custom/My First Lighting Shader" {
 
 	Properties {
 		_Tint ("Tint", Color) = (1, 1, 1, 1)
@@ -12,10 +10,8 @@ Shader "Custom/My First Lighting Shader" {
 		_DetailTex ("Detail Texture", 2D) = "gray" {}
 		[NoScaleOffset] _DetailNormalMap ("Detail Normals", 2D) = "bump" {}
 		_DetailBumpScale ("Detail Bump Scale", Float) = 1
-		
 	}
-	
-	//everything defined in CGINCLUDE will be included in ALL CGPROGRAM blocks of the shader (BOTH passes)
+
 	CGINCLUDE
 
 	#define BINORMAL_PER_FRAGMENT
@@ -50,7 +46,7 @@ Shader "Custom/My First Lighting Shader" {
 			Tags {
 				"LightMode" = "ForwardAdd"
 			}
-			
+
 			Blend One One
 			ZWrite Off
 
@@ -59,10 +55,10 @@ Shader "Custom/My First Lighting Shader" {
 			#pragma target 3.0
 
 			#pragma multi_compile_fwdadd_fullshadows
-
+			
 			#pragma vertex MyVertexProgram
 			#pragma fragment MyFragmentProgram
-			
+
 			#include "My Lighting.cginc"
 
 			ENDCG
@@ -76,6 +72,8 @@ Shader "Custom/My First Lighting Shader" {
 			CGPROGRAM
 
 			#pragma target 3.0
+
+			#pragma multi_compile_shadowcaster
 
 			#pragma vertex MyShadowVertexProgram
 			#pragma fragment MyShadowFragmentProgram

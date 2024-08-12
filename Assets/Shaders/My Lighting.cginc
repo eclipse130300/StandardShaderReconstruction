@@ -98,17 +98,27 @@ UnityLight CreateLight (Interpolators i) {
 	return light;
 }
 
-UnityIndirect CreateIndirectLight (Interpolators i) {
+UnityIndirect CreateIndirectLight (Interpolators i, float3 viewDir)
+{
 	UnityIndirect indirectLight;
 	indirectLight.diffuse = 0;
 	indirectLight.specular = 0;
 
 	#if defined(VERTEXLIGHT_ON)
-		indirectLight.diffuse = i.vertexLightColor;
+	indirectLight.diffuse = i.vertexLightColor;
 	#endif
 
 	#if defined(FORWARD_BASE_PASS)
-		indirectLight.diffuse += max(0, ShadeSH9(float4(i.normal, 1)));
+	indirectLight.diffuse += max(0, ShadeSH9(float4(i.normal, 1)));
+	float3 reflectionDir = reflect(-viewDir, i.normal);
+	//unity conversion, non linear
+	//decode from hdr enviromental cubemap at the end
+	Unity_GlossyEnvironmentData envData;
+	envData.roughness = 1 - _Smoothness;
+	envData.reflUVW = reflectionDir;
+	indirectLight.specular = Unity_GlossyEnvironment(
+		UNITY_PASS_TEXCUBE(unity_SpecCube0), unity_SpecCube0_HDR, envData
+	);
 	#endif
 
 	return indirectLight;
@@ -152,7 +162,7 @@ float4 MyFragmentProgram (Interpolators i) : SV_TARGET {
 		albedo, specularTint,
 		oneMinusReflectivity, _Smoothness,
 		i.normal, viewDir,
-		CreateLight(i), CreateIndirectLight(i)
+		CreateLight(i), CreateIndirectLight(i, viewDir)
 	);
 }
 

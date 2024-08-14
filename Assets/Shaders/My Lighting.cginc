@@ -98,6 +98,15 @@ UnityLight CreateLight (Interpolators i) {
 	return light;
 }
 
+float3 BoxProjection (
+	float3 direction, float3 position,
+	float3 cubemapPosition, float3 boxMin, float3 boxMax
+) {
+	float3 factors = ((direction > 0 ? boxMax : boxMin) - position) / direction;
+	float scalar = min(min(factors.x, factors.y), factors.z);
+	return direction * scalar + (position - cubemapPosition);
+}
+
 UnityIndirect CreateIndirectLight (Interpolators i, float3 viewDir)
 {
 	UnityIndirect indirectLight;
@@ -115,7 +124,14 @@ UnityIndirect CreateIndirectLight (Interpolators i, float3 viewDir)
 	//decode from hdr enviromental cubemap at the end
 	Unity_GlossyEnvironmentData envData;
 	envData.roughness = 1 - _Smoothness;
-	envData.reflUVW = reflectionDir;
+
+	//coorect box projection with reflection probes
+	envData.reflUVW = BoxProjection(
+	reflectionDir, i.worldPos,
+	unity_SpecCube0_ProbePosition,
+	unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax
+);
+	
 	indirectLight.specular = Unity_GlossyEnvironment(
 		UNITY_PASS_TEXCUBE(unity_SpecCube0), unity_SpecCube0_HDR, envData
 	);

@@ -1,6 +1,4 @@
-﻿// Upgrade NOTE: replaced 'UNITY_PASS_TEXCUBE(unity_SpecCube1)' with 'UNITY_PASS_TEXCUBE_SAMPLER(unity_SpecCube1,unity_SpecCube0)'
-
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
 
 #if !defined(MY_LIGHTING_INCLUDED)
 #define MY_LIGHTING_INCLUDED
@@ -116,30 +114,25 @@ float3 BoxProjection (
 	return direction;
 }
 
-UnityIndirect CreateIndirectLight (Interpolators i, float3 viewDir)
-{
+UnityIndirect CreateIndirectLight (Interpolators i, float3 viewDir) {
 	UnityIndirect indirectLight;
 	indirectLight.diffuse = 0;
 	indirectLight.specular = 0;
 
 	#if defined(VERTEXLIGHT_ON)
-	indirectLight.diffuse = i.vertexLightColor;
+		indirectLight.diffuse = i.vertexLightColor;
 	#endif
 
 	#if defined(FORWARD_BASE_PASS)
 		indirectLight.diffuse += max(0, ShadeSH9(float4(i.normal, 1)));
 		float3 reflectionDir = reflect(-viewDir, i.normal);
-		//unity conversion, non linear
-		//decode from hdr enviromental cubemap at the end
 		Unity_GlossyEnvironmentData envData;
 		envData.roughness = 1 - _Smoothness;
-	
-		//coorect box projection with reflection probes
 		envData.reflUVW = BoxProjection(
-		reflectionDir, i.worldPos,
-		unity_SpecCube0_ProbePosition,
-		unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax);	
-	
+			reflectionDir, i.worldPos,
+			unity_SpecCube0_ProbePosition,
+			unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax
+		);
 		float3 probe0 = Unity_GlossyEnvironment(
 			UNITY_PASS_TEXCUBE(unity_SpecCube0), unity_SpecCube0_HDR, envData
 		);
@@ -148,7 +141,6 @@ UnityIndirect CreateIndirectLight (Interpolators i, float3 viewDir)
 			unity_SpecCube1_ProbePosition,
 			unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax
 		);
-	
 		#if UNITY_SPECCUBE_BLENDING
 			float interpolator = unity_SpecCube0_BoxMin.w;
 			UNITY_BRANCH
@@ -159,8 +151,11 @@ UnityIndirect CreateIndirectLight (Interpolators i, float3 viewDir)
 				);
 				indirectLight.specular = lerp(probe1, probe0, interpolator);
 			}
-			#else
-		indirectLight.specular = probe0;
+			else {
+				indirectLight.specular = probe0;
+			}
+		#else
+			indirectLight.specular = probe0;
 		#endif
 	#endif
 

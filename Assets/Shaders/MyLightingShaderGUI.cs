@@ -1,14 +1,19 @@
 using UnityEngine;
 using UnityEditor;
 
+enum SmoothnessSource {
+    Uniform, Albedo, Metallic
+}
+
 public class MyLightingShaderGUI : ShaderGUI {
-    
+    Material target;
     MaterialEditor editor;
     MaterialProperty[] properties;
 
     public override void OnGUI (
         MaterialEditor editor, MaterialProperty[] properties
     ) {
+        this.target = editor.target as Material;
         this.editor = editor;
         this.properties = properties;
         DoMain();
@@ -22,10 +27,11 @@ public class MyLightingShaderGUI : ShaderGUI {
         editor.TexturePropertySingleLine(
             MakeLabel(mainTex, "Albedo (RGB)"), mainTex, FindProperty("_Tint")
         );
-        
-        DoNormals();
+
         DoMetallic();
         DoSmoothness();
+        DoNormals();
+        DoEmission();
         
         editor.TextureScaleOffsetProperty(mainTex);
     }
@@ -52,17 +58,62 @@ public class MyLightingShaderGUI : ShaderGUI {
     }
     
     void DoMetallic () {
-        MaterialProperty slider = FindProperty("_Metallic");
-        EditorGUI.indentLevel += 2;
-        editor.ShaderProperty(slider, MakeLabel(slider));
-        EditorGUI.indentLevel -= 2;
+        MaterialProperty map = FindProperty("_MetallicMap");
+        EditorGUI.BeginChangeCheck();
+        editor.TexturePropertySingleLine(
+            MakeLabel(map, "Metallic (R)"), map,
+            map.textureValue ? null : FindProperty("_Metallic")
+        );
+        if (EditorGUI.EndChangeCheck()) {
+            SetKeyword("_METALLIC_MAP", map.textureValue);
+        }
+    }
+    
+    static ColorPickerHDRConfig emissionConfig =
+        new ColorPickerHDRConfig(0f, 99f, 1f / 99f, 3f);
+    
+    void DoEmission () {
+        MaterialProperty map = FindProperty("_EmissionMap");
+        EditorGUI.BeginChangeCheck();
+        editor.TexturePropertyWithHDRColor(
+            MakeLabel("Emission (RGB)"), map, FindProperty("_Emission"),
+            emissionConfig, false
+        );
+        if (EditorGUI.EndChangeCheck()) {
+            SetKeyword("_EMISSION_MAP", map.textureValue);
+        }
     }
 
     void DoSmoothness () {
-        MaterialProperty slider = FindProperty("_Smoothness");
+        SmoothnessSource source = SmoothnessSource.Uniform;
+        if (IsKeywordEnabled("_SMOOTHNESS_ALBEDO")) {
+            source = SmoothnessSource.Albedo;
+        }
+        else if (IsKeywordEnabled("_SMOOTHNESS_METALLIC")) {
+            source = SmoothnessSource.Metallic;
+        }
+
         EditorGUI.indentLevel += 2;
+        MaterialProperty slider = FindProperty("_Smoothness");
         editor.ShaderProperty(slider, MakeLabel(slider));
-        EditorGUI.indentLevel -= 2;
+        EditorGUI.indentLevel += 1;
+        
+        EditorGUI.BeginChangeCheck();
+        
+        source = (SmoothnessSource)EditorGUILayout.EnumPopup(
+            MakeLabel("Source"), source
+        );
+        
+        if (EditorGUI.EndChangeCheck()) {
+            RecordAction("Smoothness Source");
+            
+            SetKeyword("_SMOOTHNESS_ALBEDO", source == SmoothnessSource.Albedo);
+            SetKeyword(
+                "_SMOOTHNESS_METALLIC", source == SmoothnessSource.Metallic
+            );
+        }
+        
+        EditorGUI.indentLevel -= 3;
     }
     
     void DoNormals () {
@@ -91,5 +142,22 @@ public class MyLightingShaderGUI : ShaderGUI {
         staticLabel.text = property.displayName;
         staticLabel.tooltip = tooltip;
         return staticLabel;
+    }
+    
+    bool IsKeywordEnabled (string keyword) {
+        return target.IsKeywordEnabled(keyword);
+    }
+    
+    void SetKeyword (string keyword, bool state) {
+        if (state) {
+            target.EnableKeyword(keyword);
+        }
+        else {
+            target.DisableKeyword(keyword);
+        }
+    }
+    
+    void RecordAction (string label) {
+        editor.RegisterPropertyChangeUndo(label);
     }
 }

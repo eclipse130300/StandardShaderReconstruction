@@ -12,7 +12,7 @@ Material:
   m_ValidKeywords:
   - _RENDERING_TRANSPARENT
   m_InvalidKeywords: []
-  m_LightmapFlags: 4
+  m_LightmapFlags: 1
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: 3000
@@ -46,8 +46,12 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _HeightMap:
+        m_Texture: {fileID: 2800000, guid: d38a4f30d413745adaf12f60ca54997d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 2991e95d38cfcc94682d60b01d69a356, type: 3}
+        m_Texture: {fileID: 2800000, guid: cf1eb2d3368cb446eafc43733f6d2073, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -83,9 +87,11 @@ Material:
     - _GlossyReflections: 1
     - _Metallic: 0
     - _Mode: 0
+    - _NormalBump: 0.25
+    - _NormalScale: 0.25
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _Smoothness: 0.054
+    - _Smoothness: 0.8
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
@@ -93,7 +99,9 @@ Material:
     - _ZWrite: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Emission: {r: 1, g: 1, b: 1, a: 1}
+    - _Emission: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _Specular: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    - _SpecularTint: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _Tint: {r: 1, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []

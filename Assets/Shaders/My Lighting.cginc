@@ -51,6 +51,17 @@ struct Interpolators {
 	#endif
 };
 
+struct InterpolatorsVertex {
+	float4 position : SV_POSITION;
+	#if SHADOWS_NEED_UV
+	float2 uv : TEXCOORD0;
+	#endif
+	#if defined(SHADOWS_CUBE)
+	float3 lightVec : TEXCOORD1;
+	#endif
+};
+
+
 float GetDetailMask (Interpolators i) {
 	#if defined (_DETAIL_MASK)
 		return tex2D(_DetailMask, i.uv.xy).a;

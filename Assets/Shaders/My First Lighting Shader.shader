@@ -32,6 +32,7 @@
 	CGINCLUDE
 
 	#define BINORMAL_PER_FRAGMENT
+	#define FOG_DISTANCE
 
 	ENDCG
 
@@ -60,6 +61,7 @@
 
 			#pragma multi_compile _ SHADOWS_SCREEN
 			#pragma multi_compile _ VERTEXLIGHT_ON
+			#pragma multi_compile_fog
 
 			#pragma vertex MyVertexProgram
 			#pragma fragment MyFragmentProgram
@@ -90,6 +92,7 @@
 			#pragma shader_feature _DETAIL_MASK
 			#pragma shader_feature _DETAIL_ALBEDO_MAP
 			#pragma shader_feature _DETAIL_NORMAL_MAP
+			#pragma multi_compile_fog
 
 			#pragma multi_compile_fwdadd_fullshadows
 			
@@ -113,6 +116,7 @@
 			#pragma shader_feature _ _RENDERING_CUTOUT _RENDERING_FADE _RENDERING_TRANSPARENT
 			#pragma shader_feature _SMOOTHNESS_ALBEDO
 			#pragma shader_feature _SEMITRANSPARENT_SHADOWS
+			
 
 			#pragma multi_compile_shadowcaster
 

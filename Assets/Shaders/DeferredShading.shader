@@ -6,10 +6,8 @@ Shader "Custom/DeferredShading" {
 	SubShader {
 
 		Pass {
-			Cull Off
-			ZTest Always
 			ZWrite Off
-			Blend One One
+			Blend [_SrcBlend] [_DstBlend]
 
 			CGPROGRAM
 

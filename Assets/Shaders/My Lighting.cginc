@@ -51,32 +51,21 @@ struct Interpolators {
 	#endif
 
 	#if FOG_DEPTH
-	float4 worldPos : TEXCOORD4;
+		float4 worldPos : TEXCOORD4;
 	#else
-	float3 worldPos : TEXCOORD4;
+		float3 worldPos : TEXCOORD4;
 	#endif
 
 	SHADOW_COORDS(5)
 
-	//vert light and lightmap are mutually exclusive
 	#if defined(VERTEXLIGHT_ON)
 		float3 vertexLightColor : TEXCOORD6;
 	#endif
+
 	#if defined(LIGHTMAP_ON)
-	float2 lightmapUV : TEXCOORD6;
+		float2 lightmapUV : TEXCOORD6;
 	#endif
 };
-
-struct InterpolatorsVertex {
-	float4 position : SV_POSITION;
-	#if SHADOWS_NEED_UV
-	float2 uv : TEXCOORD0;
-	#endif
-	#if defined(SHADOWS_CUBE)
-	float3 lightVec : TEXCOORD1;
-	#endif
-};
-
 
 float GetDetailMask (Interpolators i) {
 	#if defined (_DETAIL_MASK)
@@ -178,8 +167,7 @@ Interpolators MyVertexProgram (VertexData v) {
 	i.pos = UnityObjectToClipPos(v.vertex);
 	i.worldPos.xyz = mul(unity_ObjectToWorld, v.vertex);
 	#if FOG_DEPTH
-	//save depth for fog (z clip coord is depth)
-	i.worldPos.w = i.pos.z;
+		i.worldPos.w = i.pos.z;
 	#endif
 	i.normal = UnityObjectToWorldNormal(v.normal);
 
@@ -194,7 +182,6 @@ Interpolators MyVertexProgram (VertexData v) {
 	i.uv.zw = TRANSFORM_TEX(v.uv, _DetailTex);
 
 	#if defined(LIGHTMAP_ON)
-	//like transform_tex, but unity idiots used unity_LightmapST instead of unity_Lightmap_ST
 		i.lightmapUV = v.uv1 * unity_LightmapST.xy + unity_LightmapST.zw;
 	#endif
 
@@ -216,7 +203,7 @@ UnityLight CreateLight (Interpolators i) {
 		#else
 			light.dir = _WorldSpaceLightPos0.xyz;
 		#endif
-	
+
 		UNITY_LIGHT_ATTENUATION(attenuation, i, i.worldPos.xyz);
 		
 		light.color = _LightColor0.rgb * attenuation;
@@ -251,14 +238,20 @@ UnityIndirect CreateIndirectLight (Interpolators i, float3 viewDir) {
 
 	#if defined(FORWARD_BASE_PASS) || defined(DEFERRED_PASS)
 		#if defined(LIGHTMAP_ON)
-		//sample tex2d cause it is platform specific
-		indirectLight.diffuse = DecodeLightmap(
-			UNITY_SAMPLE_TEX2D(unity_Lightmap, i.lightmapUV)
-		);
+			indirectLight.diffuse =
+				DecodeLightmap(UNITY_SAMPLE_TEX2D(unity_Lightmap, i.lightmapUV));
+			
+			#if defined(DIRLIGHTMAP_COMBINED)
+				float4 lightmapDirection = UNITY_SAMPLE_TEX2D_SAMPLER(
+					unity_LightmapInd, unity_Lightmap, i.lightmapUV
+				);
+				indirectLight.diffuse = DecodeDirectionalLightmap(
+					indirectLight.diffuse, lightmapDirection, i.normal
+				);
+			#endif
 		#else
 			indirectLight.diffuse += max(0, ShadeSH9(float4(i.normal, 1)));
 		#endif
-		
 		float3 reflectionDir = reflect(-viewDir, i.normal);
 		Unity_GlossyEnvironmentData envData;
 		envData.roughness = 1 - GetSmoothness(i);
@@ -328,7 +321,6 @@ float4 ApplyFog (float4 color, Interpolators i) {
 		UNITY_CALC_FOG_FACTOR_RAW(viewDistance);
 		float3 fogColor = 0;
 		#if defined(FORWARD_BASE_PASS)
-			//in base pass only to skip adding color in additive passes
 			fogColor = unity_FogColor.rgb;
 		#endif
 		color.rgb = lerp(fogColor, color.rgb, saturate(unityFogFactor));
@@ -338,12 +330,12 @@ float4 ApplyFog (float4 color, Interpolators i) {
 
 struct FragmentOutput {
 	#if defined(DEFERRED_PASS)
-	float4 gBuffer0 : SV_Target0;
-	float4 gBuffer1 : SV_Target1;
-	float4 gBuffer2 : SV_Target2;
-	float4 gBuffer3 : SV_Target3;
+		float4 gBuffer0 : SV_Target0;
+		float4 gBuffer1 : SV_Target1;
+		float4 gBuffer2 : SV_Target2;
+		float4 gBuffer3 : SV_Target3;
 	#else
-	float4 color : SV_Target;
+		float4 color : SV_Target;
 	#endif
 };
 
@@ -381,9 +373,8 @@ FragmentOutput MyFragmentProgram (Interpolators i) {
 	FragmentOutput output;
 	#if defined(DEFERRED_PASS)
 		#if !defined(UNITY_HDR_ON)
-		color.rgb = exp2(-color.rgb);
+			color.rgb = exp2(-color.rgb);
 		#endif
-	
 		output.gBuffer0.rgb = albedo;
 		output.gBuffer0.a = GetOcclusion(i);
 		output.gBuffer1.rgb = specularTint;

@@ -22,7 +22,7 @@
 		[NoScaleOffset] _DetailNormalMap ("Detail Normals", 2D) = "bump" {}
 		_DetailBumpScale ("Detail Bump Scale", Float) = 1
 
-		_Cutoff  ("Alpha Cutoff", Range(0, 1)) = 0.5
+		_Cutoff ("Alpha Cutoff", Range(0, 1)) = 0.5
 
 		[HideInInspector] _SrcBlend ("_SrcBlend", Float) = 1
 		[HideInInspector] _DstBlend ("_DstBlend", Float) = 0
@@ -59,9 +59,7 @@
 			#pragma shader_feature _DETAIL_ALBEDO_MAP
 			#pragma shader_feature _DETAIL_NORMAL_MAP
 
-			#pragma multi_compile _ SHADOWS_SCREEN
-			//lightmap and vertexlight are mutually exclusive
-			#pragma multi_compile _ LIGHTMAP_ON VERTEXLIGHT_ON
+			#pragma multi_compile_fwdbase
 			#pragma multi_compile_fog
 
 			#pragma vertex MyVertexProgram
@@ -93,38 +91,14 @@
 			#pragma shader_feature _DETAIL_MASK
 			#pragma shader_feature _DETAIL_ALBEDO_MAP
 			#pragma shader_feature _DETAIL_NORMAL_MAP
-			#pragma multi_compile_fog
 
 			#pragma multi_compile_fwdadd_fullshadows
+			#pragma multi_compile_fog
 			
 			#pragma vertex MyVertexProgram
 			#pragma fragment MyFragmentProgram
 
 			#include "My Lighting.cginc"
-
-			ENDCG
-		}
-
-		Pass {
-			Tags {
-				"LightMode" = "ShadowCaster"
-			}
-
-			CGPROGRAM
-
-			#pragma target 3.0
-
-			#pragma shader_feature _ _RENDERING_CUTOUT _RENDERING_FADE _RENDERING_TRANSPARENT
-			#pragma shader_feature _SMOOTHNESS_ALBEDO
-			#pragma shader_feature _SEMITRANSPARENT_SHADOWS
-			
-
-			#pragma multi_compile_shadowcaster
-
-			#pragma vertex MyShadowVertexProgram
-			#pragma fragment MyShadowFragmentProgram
-
-			#include "My Shadows.cginc"
 
 			ENDCG
 		}
@@ -148,8 +122,8 @@
 			#pragma shader_feature _DETAIL_MASK
 			#pragma shader_feature _DETAIL_ALBEDO_MAP
 			#pragma shader_feature _DETAIL_NORMAL_MAP
-			#pragma multi_compile _ UNITY_HDR_ON
-			#pragma multi_compile _ LIGHTMAP_ON
+
+			#pragma multi_compile_prepassfinal
 
 			#pragma vertex MyVertexProgram
 			#pragma fragment MyFragmentProgram
@@ -163,14 +137,35 @@
 
 		Pass {
 			Tags {
+				"LightMode" = "ShadowCaster"
+			}
+
+			CGPROGRAM
+
+			#pragma target 3.0
+
+			#pragma shader_feature _ _RENDERING_CUTOUT _RENDERING_FADE _RENDERING_TRANSPARENT
+			#pragma shader_feature _SEMITRANSPARENT_SHADOWS
+			#pragma shader_feature _SMOOTHNESS_ALBEDO
+
+			#pragma multi_compile_shadowcaster
+
+			#pragma vertex MyShadowVertexProgram
+			#pragma fragment MyShadowFragmentProgram
+
+			#include "My Shadows.cginc"
+
+			ENDCG
+		}
+
+		Pass {
+			Tags {
 				"LightMode" = "Meta"
 			}
 
 			Cull Off
 
 			CGPROGRAM
-
-			#include "My Lightmapping.cginc"
 
 			#pragma vertex MyLightmappingVertexProgram
 			#pragma fragment MyLightmappingFragmentProgram
@@ -181,7 +176,7 @@
 			#pragma shader_feature _DETAIL_MASK
 			#pragma shader_feature _DETAIL_ALBEDO_MAP
 
-
+			#include "My Lightmapping.cginc"
 
 			ENDCG
 		}

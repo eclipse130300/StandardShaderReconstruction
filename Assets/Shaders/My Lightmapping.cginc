@@ -40,7 +40,7 @@ float3 GetAlbedo (Interpolators i) {
 		float3 details = tex2D(_DetailTex, i.uv.zw) * unity_ColorSpaceDouble;
 		albedo = lerp(albedo, albedo * details, GetDetailMask(i));
 	#endif
-		return albedo;
+	return albedo;
 }
 
 float GetMetallic (Interpolators i) {
@@ -58,7 +58,7 @@ float GetSmoothness (Interpolators i) {
 	#elif defined(_SMOOTHNESS_METALLIC) && defined(_METALLIC_MAP)
 		smoothness = tex2D(_MetallicMap, i.uv.xy).a;
 	#endif
-		return smoothness * _Smoothness;
+	return smoothness * _Smoothness;
 }
 
 float3 GetEmission (Interpolators i) {
@@ -71,11 +71,10 @@ float3 GetEmission (Interpolators i) {
 
 Interpolators MyLightmappingVertexProgram (VertexData v) {
 	Interpolators i;
-
 	v.vertex.xy = v.uv1 * unity_LightmapST.xy + unity_LightmapST.zw;
 	v.vertex.z = v.vertex.z > 0 ? 0.0001 : 0;
-	
-	i.pos = UnityObjectToClipPos(v.vertex);
+
+    i.pos = UnityObjectToClipPos(v.vertex);
 
 	i.uv.xy = TRANSFORM_TEX(v.uv, _MainTex);
 	i.uv.zw = TRANSFORM_TEX(v.uv, _DetailTex);
@@ -91,10 +90,9 @@ float4 MyLightmappingFragmentProgram (Interpolators i) : SV_TARGET {
 		surfaceData.SpecularColor, oneMinusReflectivity
 	);
 
-	//do not really noticeable, but required for rough metals, as unity adds some specular to albedo by default
 	float roughness = SmoothnessToRoughness(GetSmoothness(i)) * 0.5;
 	surfaceData.Albedo += surfaceData.SpecularColor * roughness;
-	
+
 	return UnityMetaFragment(surfaceData);
 }
 

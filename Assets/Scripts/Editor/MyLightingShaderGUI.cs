@@ -106,9 +106,24 @@ public class MyLightingShaderGUI : ShaderGUI {
 				m.SetInt("_ZWrite", settings.zWrite ? 1 : 0);
 			}
 		}
-		
+
 		if (mode == RenderingMode.Fade || mode == RenderingMode.Transparent) {
 			DoSemitransparentShadows();
+		}
+	}
+
+	void DoSemitransparentShadows () {
+		EditorGUI.BeginChangeCheck();
+		bool semitransparentShadows =
+			EditorGUILayout.Toggle(
+				MakeLabel("Semitransp. Shadows", "Semitransparent Shadows"),
+				IsKeywordEnabled("_SEMITRANSPARENT_SHADOWS")
+			);
+		if (EditorGUI.EndChangeCheck()) {
+			SetKeyword("_SEMITRANSPARENT_SHADOWS", semitransparentShadows);
+		}
+		if (!semitransparentShadows) {
+			shouldShowAlphaCutoff = true;
 		}
 	}
 
@@ -130,21 +145,6 @@ public class MyLightingShaderGUI : ShaderGUI {
 		DoEmission();
 		DoDetailMask();
 		editor.TextureScaleOffsetProperty(mainTex);
-	}
-	
-	void DoSemitransparentShadows () {
-		EditorGUI.BeginChangeCheck();
-		bool semitransparentShadows =
-			EditorGUILayout.Toggle(
-				MakeLabel("Semitransp. Shadows", "Semitransparent Shadows"),
-				IsKeywordEnabled("_SEMITRANSPARENT_SHADOWS")
-			);
-		if (EditorGUI.EndChangeCheck()) {
-			SetKeyword("_SEMITRANSPARENT_SHADOWS", semitransparentShadows);
-		}
-		if (!semitransparentShadows) {
-			shouldShowAlphaCutoff = true;
-		}
 	}
 
 	void DoAlphaCutoff () {
@@ -227,13 +227,11 @@ public class MyLightingShaderGUI : ShaderGUI {
 			MakeLabel(map, "Emission (RGB)"), map, FindProperty("_Emission"),
 			emissionConfig, false
 		);
-		
 		if (EditorGUI.EndChangeCheck()) {
 			if (tex != map.textureValue) {
 				SetKeyword("_EMISSION_MAP", map.textureValue);
 			}
 
-			//singal materail that we use baked emissive, for lightmapper
 			foreach (Material m in editor.targets) {
 				m.globalIlluminationFlags =
 					MaterialGlobalIlluminationFlags.BakedEmissive;

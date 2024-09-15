@@ -1,4 +1,4 @@
-Shader "Custom/DeferredShading" {
+﻿Shader "Custom/DeferredShading" {
 	
 	Properties {
 	}
@@ -6,11 +6,12 @@ Shader "Custom/DeferredShading" {
 	SubShader {
 
 		Pass {
-			ZWrite Off
 			Blend [_SrcBlend] [_DstBlend]
+			ZWrite Off
 
 			CGPROGRAM
 
+			#pragma target 3.0
 			#pragma vertex VertexProgram
 			#pragma fragment FragmentProgram
 
@@ -23,28 +24,27 @@ Shader "Custom/DeferredShading" {
 
 			ENDCG
 		}
-		
+
 		Pass {
 			Cull Off
 			ZTest Always
 			ZWrite Off
-			
-			//skip background
+
 			Stencil {
-			Ref [_StencilNonBackground]
-			ReadMask [_StencilNonBackground]
-			CompBack Equal
-			CompFront Equal
+				Ref [_StencilNonBackground]
+				ReadMask [_StencilNonBackground]
+				CompBack Equal
+				CompFront Equal
 			}
-			
+
 			CGPROGRAM
 
 			#pragma target 3.0
 			#pragma vertex VertexProgram
 			#pragma fragment FragmentProgram
-			
+
 			#pragma exclude_renderers nomrt
-			
+
 			#include "UnityCG.cginc"
 
 			sampler2D _LightBuffer;

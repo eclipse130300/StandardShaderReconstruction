@@ -227,8 +227,17 @@ public class MyLightingShaderGUI : ShaderGUI {
 			MakeLabel(map, "Emission (RGB)"), map, FindProperty("_Emission"),
 			emissionConfig, false
 		);
-		if (EditorGUI.EndChangeCheck() && tex != map.textureValue) {
-			SetKeyword("_EMISSION_MAP", map.textureValue);
+		
+		if (EditorGUI.EndChangeCheck()) {
+			if (tex != map.textureValue) {
+				SetKeyword("_EMISSION_MAP", map.textureValue);
+			}
+
+			//singal materail that we use baked emissive, for lightmapper
+			foreach (Material m in editor.targets) {
+				m.globalIlluminationFlags =
+					MaterialGlobalIlluminationFlags.BakedEmissive;
+			}
 		}
 	}
 

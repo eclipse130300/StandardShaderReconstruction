@@ -69,6 +69,7 @@ public class MyLightingShaderGUI : ShaderGUI {
 		DoRenderingMode();
 		DoMain();
 		DoSecondary();
+		DoAdvanced();
 	}
 
 	void DoRenderingMode () {
@@ -145,6 +146,12 @@ public class MyLightingShaderGUI : ShaderGUI {
 		DoEmission();
 		DoDetailMask();
 		editor.TextureScaleOffsetProperty(mainTex);
+	}
+	
+	void DoAdvanced () {
+		GUILayout.Label("Advanced Options", EditorStyles.boldLabel);
+
+		editor.EnableInstancingField();
 	}
 
 	void DoAlphaCutoff () {

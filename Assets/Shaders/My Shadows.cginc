@@ -25,6 +25,7 @@ float _Cutoff;
 sampler3D _DitherMaskLOD;
 
 struct VertexData {
+	UNITY_VERTEX_INPUT_INSTANCE_ID
 	float4 position : POSITION;
 	float3 normal : NORMAL;
 	float2 uv : TEXCOORD0;
@@ -65,6 +66,7 @@ float GetAlpha (Interpolators i) {
 
 InterpolatorsVertex MyShadowVertexProgram (VertexData v) {
 	InterpolatorsVertex i;
+	UNITY_SETUP_INSTANCE_ID(v);
 	#if defined(SHADOWS_CUBE)
 		i.position = UnityObjectToClipPos(v.position);
 		i.lightVec =

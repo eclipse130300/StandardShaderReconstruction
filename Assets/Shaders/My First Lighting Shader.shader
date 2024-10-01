@@ -10,6 +10,9 @@
 		[NoScaleOffset] _MetallicMap ("Metallic", 2D) = "white" {}
 		[Gamma] _Metallic ("Metallic", Range(0, 1)) = 0
 		_Smoothness ("Smoothness", Range(0, 1)) = 0.1
+		
+		[NoScaleOffset] _ParallaxMap ("Parallax", 2D) = "black" {}
+		_ParallaxStrength ("Parallax Strength", Range(0, 0.1)) = 0
 
 		[NoScaleOffset] _OcclusionMap ("Occlusion", 2D) = "white" {}
 		_OcclusionStrength("Occlusion Strength", Range(0, 1)) = 1
@@ -58,6 +61,7 @@
 			#pragma shader_feature _DETAIL_MASK
 			#pragma shader_feature _DETAIL_ALBEDO_MAP
 			#pragma shader_feature _DETAIL_NORMAL_MAP
+			#pragma shader_feature _PARALLAX_MAP
 
 			#pragma multi_compile_fwdbase
 			#pragma multi_compile_fog

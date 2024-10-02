@@ -506,23 +506,49 @@ float4 ApplyFog (float4 color, Interpolators i) {
 	return color;
 }
 
-void ApplyParallax (inout Interpolators i) {
-	#if defined(_PARALLAX_MAP)
-	i.tangentViewDir = normalize(i.tangentViewDir);
-	
-	#if !defined(PARALLAX_OFFSET_LIMITING)
-		#if !defined(PARALLAX_BIAS)
-			#define PARALLAX_BIAS 0.42
-		#endif
-		i.tangentViewDir.xy /= (i.tangentViewDir.z + PARALLAX_BIAS);
-	#endif
-	
-	float height = tex2D(_ParallaxMap, i.uv.xy).g;
+float GetParallaxHeight (float2 uv) {
+	return tex2D(_ParallaxMap, uv).g;
+}
+
+float2 ParallaxOffset (float2 uv, float2 viewDir) {
+	float height = GetParallaxHeight(uv);
 	height -= 0.5;
 	height *= _ParallaxStrength;
-	float2 uvOffset = i.tangentViewDir.xy * height;
-	i.uv.xy += uvOffset;
-	i.uv.zw += uvOffset * (_DetailTex_ST.xy / _MainTex_ST.xy);
+	return viewDir * height;
+}
+
+float2 ParallaxRaymarching (float2 uv, float2 viewDir) {
+	float2 uvOffset = 0;
+	float stepSize = 0.1;
+	float2 uvDelta = viewDir * (stepSize * _ParallaxStrength);
+	float stepHeight = 1;
+	float surfaceHeight = GetParallaxHeight(uv);
+
+	for (int i = 1; i < 10 && stepHeight > surfaceHeight; i++) {
+		uvOffset -= uvDelta;
+		stepHeight -= stepSize;
+		surfaceHeight = GetParallaxHeight(uv + uvOffset);
+	}
+	
+	return uvOffset;
+}
+
+void ApplyParallax (inout Interpolators i) {
+	#if defined(_PARALLAX_MAP)
+		i.tangentViewDir = normalize(i.tangentViewDir);
+		#if !defined(PARALLAX_OFFSET_LIMITING)
+			#if !defined(PARALLAX_BIAS)
+				#define PARALLAX_BIAS 0.42
+			#endif
+			i.tangentViewDir.xy /= (i.tangentViewDir.z + PARALLAX_BIAS);
+		#endif
+			
+		#if !defined(PARALLAX_FUNCTION)
+			#define PARALLAX_FUNCTION ParallaxOffset
+		#endif
+		float2 uvOffset = PARALLAX_FUNCTION(i.uv.xy, i.tangentViewDir.xy);
+		i.uv.xy += uvOffset;
+		i.uv.zw += uvOffset * (_DetailTex_ST.xy / _MainTex_ST.xy);
 	#endif
 }
 

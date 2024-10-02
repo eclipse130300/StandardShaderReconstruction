@@ -36,8 +36,10 @@
 
 	#define BINORMAL_PER_FRAGMENT
 	#define FOG_DISTANCE
-	//	#define PARALLAX_BIAS 0
 	//	#define PARALLAX_OFFSET_LIMITING
+	#define PARALLAX_BIAS 0
+	//raymarching or offset?
+	#define PARALLAX_FUNCTION ParallaxRaymarching
 
 	ENDCG
 

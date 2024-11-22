@@ -274,12 +274,16 @@ InterpolatorsVertex MyVertexProgram (VertexData v) {
 	ComputeVertexLightColor(i);
 
 	#if defined (_PARALLAX_MAP)
-	float3x3 objectToTangent = float3x3(
-		v.tangent.xyz,
-		cross(v.normal, v.tangent.xyz) * v.tangent.w,
-		v.normal
-	);
-	i.tangentViewDir = mul(objectToTangent, ObjSpaceViewDir(v.vertex));
+		#if defined(PARALLAX_SUPPORT_SCALED_DYNAMIC_BATCHING)
+			v.tangent.xyz = normalize(v.tangent.xyz);
+			v.normal = normalize(v.normal);
+		#endif
+		float3x3 objectToTangent = float3x3(
+			v.tangent.xyz,
+			cross(v.normal, v.tangent.xyz) * v.tangent.w,
+			v.normal
+		);
+		i.tangentViewDir = mul(objectToTangent, ObjSpaceViewDir(v.vertex));
 	#endif
 	
 	return i;
@@ -518,17 +522,59 @@ float2 ParallaxOffset (float2 uv, float2 viewDir) {
 }
 
 float2 ParallaxRaymarching (float2 uv, float2 viewDir) {
+	#if !defined(PARALLAX_RAYMARCHING_STEPS)
+	#define PARALLAX_RAYMARCHING_STEPS 10
+	#endif
 	float2 uvOffset = 0;
-	float stepSize = 0.1;
+	float stepSize = 1.0 / PARALLAX_RAYMARCHING_STEPS;
 	float2 uvDelta = viewDir * (stepSize * _ParallaxStrength);
+
 	float stepHeight = 1;
 	float surfaceHeight = GetParallaxHeight(uv);
 
-	for (int i = 1; i < 10 && stepHeight > surfaceHeight; i++) {
+	float2 prevUVOffset = uvOffset;
+	float prevStepHeight = stepHeight;
+	float prevSurfaceHeight = surfaceHeight;
+	
+	for (
+		int i = 1;
+		i < PARALLAX_RAYMARCHING_STEPS && stepHeight > surfaceHeight;
+		i++
+	) {
+		prevUVOffset = uvOffset;
+		prevStepHeight = stepHeight;
+		prevSurfaceHeight = surfaceHeight;
+		
 		uvOffset -= uvDelta;
 		stepHeight -= stepSize;
 		surfaceHeight = GetParallaxHeight(uv + uvOffset);
 	}
+
+	#if !defined(PARALLAX_RAYMARCHING_SEARCH_STEPS)
+		#define PARALLAX_RAYMARCHING_SEARCH_STEPS 0
+	#endif
+	
+	#if PARALLAX_RAYMARCHING_SEARCH_STEPS > 0
+		for (int i = 0; i < PARALLAX_RAYMARCHING_SEARCH_STEPS; i++) {
+			uvDelta *= 0.5;
+			stepSize *= 0.5;
+
+			if (stepHeight < surfaceHeight) {
+				uvOffset += uvDelta;
+				stepHeight += stepSize;
+			}
+			else {
+				uvOffset -= uvDelta;
+				stepHeight -= stepSize;
+			}
+			surfaceHeight = GetParallaxHeight(uv + uvOffset);
+		}
+	#elif defined(PARALLAX_RAYMARCHING_INTERPOLATE)
+		float prevDifference = prevStepHeight - prevSurfaceHeight;
+		float difference = surfaceHeight - stepHeight;
+		float t = prevDifference / (prevDifference + difference);
+		uvOffset = prevUVOffset - uvDelta * t;
+	#endif
 	
 	return uvOffset;
 }
